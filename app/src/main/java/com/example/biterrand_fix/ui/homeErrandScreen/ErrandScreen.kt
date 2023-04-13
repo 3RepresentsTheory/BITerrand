@@ -38,20 +38,33 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.biterrand_fix.ErrandBottonNavBar
 import com.example.biterrand_fix.R
 import com.example.biterrand_fix.data.DemandRepository
 import com.example.biterrand_fix.model.Demand
 import com.example.biterrand_fix.data.FakeDemandSource
+import com.example.biterrand_fix.ui.BasicNavigation.NavigationDestination
 import com.example.biterrand_fix.ui.DDLTime
+import com.example.biterrand_fix.ui.DemandPropose.DemandProposeDestination
 import com.example.biterrand_fix.ui.ErrandScreenViewModel
 import com.example.biterrand_fix.ui.UserFriendlyTime
 import com.example.biterrand_fix.ui.isOverDue
 import com.example.biterrand_fix.ui.theme.*
 
+
+object HomeDestination:NavigationDestination{
+    override val route = "home"
+    override val title = "来跑腿"
+}
+
+
 @Composable
 fun ErrandScreen (
+    navigateToDemandEntry:()->Unit,
+    navigateToProposeDemand:(Int)->Unit,
+    bottomMenu:@Composable ()->Unit,
     modifier: Modifier = Modifier,
-    viewModel: ErrandScreenViewModel = viewModel(factory = ErrandScreenViewModel.Factory)
+    viewModel: ErrandScreenViewModel = viewModel(factory = ErrandScreenViewModel.Factory),
 ){
     val mockList = listOf(
         FakeDemandSource.demandList[0],
@@ -75,6 +88,7 @@ fun ErrandScreen (
             }
         },
 //        floatingActionButtonPosition = centerDocked
+        bottomBar = bottomMenu
     ){innerPadding->
         LazyColumn{
             items(mockList){item ->

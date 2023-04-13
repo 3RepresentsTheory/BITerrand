@@ -35,33 +35,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ErrandScreen()
-
-//                    Log.d("TDEBUG","applicationContext:${applicationContext}")
-//
-//                    val status :ErrandUiState= ErrandScreenViewModel.errandUiState
-//                    Column(
-//                        modifier = Modifier.fillMaxWidth(),
-//                    ) {
-//                        Button(onClick = { /*TODO*/ }, modifier = Modifier.height(32.dp)) {
-//                            Text(text = "pseudo")
-//                        }
-//                        when(status){
-//                            is ErrandUiState.Success -> Text(text = status.statusString)
-//                            is ErrandUiState.Loading -> Text(text = "loading")
-//                            is ErrandUiState.Error   -> Text(text = "error: ${status.exceptionDescription}")
-//                            else -> {Text(text = "unknown")}
-//                        }
-//                    }
-
-//                    LazyColumn(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        contentPadding = PaddingValues(16.dp)
-//                    ){
-//                        items(){demand->
-//                            Text(text = demand.toString())
-//                        }
-//                    }
+//                    ErrandScreen()
+                    ErrandApp()
                 }
             }
         }
