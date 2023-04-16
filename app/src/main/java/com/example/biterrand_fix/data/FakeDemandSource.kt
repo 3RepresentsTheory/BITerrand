@@ -13,6 +13,7 @@ object FakeDemandSource {
     const val One_requirementProposer: Long = 250
     const val One_requirementSupplier: Long = 258
     const val One_timestamp: String         = "2023-04-12 23:00:01"
+    const val One_timeout:String            = "2023-04-16 23:59:59"
 
     const val Two_orderId: Long = 1
     const val Two_price: Long   = 250
@@ -24,6 +25,7 @@ object FakeDemandSource {
     const val Two_requirementProposer: Long = 250
     const val Two_requirementSupplier: Long = 258
     const val Two_timestamp: String         = "2023-04-10 23:00:00"
+    const val Two_timeout:String            = "2023-04-16 23:59:59"
 
     val demandList = listOf(
         Demand(
@@ -36,6 +38,7 @@ object FakeDemandSource {
             requirementProposer =   One_requirementProposer,
             requirementSupplier =   One_requirementSupplier,
             timestamp           =   One_timestamp          ,
+            timeout =               One_timeout
         ),
 
         Demand(
@@ -48,6 +51,7 @@ object FakeDemandSource {
             requirementProposer =   Two_requirementProposer,
             requirementSupplier =   null,
             timestamp           =   Two_timestamp          ,
+            timeout =               Two_timeout
         )
 
 

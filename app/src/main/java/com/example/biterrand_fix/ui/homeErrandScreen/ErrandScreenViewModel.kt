@@ -13,7 +13,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.biterrand_fix.BITerrandApplication
 import com.example.biterrand_fix.data.DemandRepository
+import com.example.biterrand_fix.data.UserBasicRepository
 import com.example.biterrand_fix.model.Demand
+import com.example.biterrand_fix.model.UserBasicInfo
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -23,20 +27,45 @@ import java.time.format.DateTimeFormatter
 
 
 sealed interface ErrandUiState{
-    data class Success(val statusString: String):ErrandUiState
+
+    data class Success(val demands: List<Demand>):ErrandUiState
     data class Error(val exceptionDescription:String):ErrandUiState
+    //        object Error:ErrandUiState
     //need fine grained loading state
     object Loading:ErrandUiState
 }
 
+
+
+
 class ErrandScreenViewModel(
-    private val demandRepository: DemandRepository
+    private val demandRepository: DemandRepository,
+    private val userBasicRepository: UserBasicRepository,
 ): ViewModel(){
+    /**
+     * used for swipe refresh on the top
+     */
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore = _isLoadingMore.asStateFlow()
+
+    var lastDemandId: Long by mutableStateOf(0)
+
+    //should be modified later, it 's dangerous because some time when the
+    //network failed , it would read old stale data
+    var errandUiList:List<Demand> by mutableStateOf(listOf())
+        private set
+
     var errandUiState: ErrandUiState by mutableStateOf(ErrandUiState.Loading)
         private set
 
-    fun getDemandList(){
+
+    fun getNewestDemandList(){
         viewModelScope.launch {
+            _isLoading.value= true
+
             errandUiState = ErrandUiState.Loading
             errandUiState = try {
                 /**
@@ -47,17 +76,66 @@ class ErrandScreenViewModel(
                 val  listResult = demandRepository.getDemandsList()
                 Log.d("TDEBUG","demand list return")
                 println(listResult)
-                ErrandUiState.Success("Success with ${listResult.size}")
+                errandUiList=listResult
+                ErrandUiState.Success(listResult)
             } catch (e: IOException){
                 ErrandUiState.Error("IOException with ${e}")
             } catch (e: HttpException){
                 ErrandUiState.Error("HTTPException with ${e}")
             }
+
+            _isLoading.value= false
         }
     }
-    init {
-        getDemandList()
+    fun getDemandListAfterId(id:Long){
+        viewModelScope.launch {
+            _isLoading.value= true
+
+            errandUiState = ErrandUiState.Loading
+            errandUiState = try {
+                /**
+                 * wait to modify here
+                 */
+                Log.d("TDEBUG","call get demand list")
+//                val  listResult = demandRepository.getTestMarsPhotos()
+                val  listResult = demandRepository.getDemandsListAfterId(id)
+                Log.d("TDEBUG","demand list return")
+                println(listResult)
+                errandUiList=listResult
+                ErrandUiState.Success(listResult)
+            } catch (e: IOException){
+                ErrandUiState.Error("IOException with ${e}")
+            } catch (e: HttpException){
+                ErrandUiState.Error("HTTPException with ${e}")
+            }
+
+            _isLoading.value= false
+        }
+
     }
+
+    init {
+        getNewestDemandList()
+    }
+
+    fun getUserNameAvatar(userid:Long):UserBasicInfo{
+        var result:UserBasicInfo = defaultUserInfo
+        viewModelScope.launch {
+            result=
+                userBasicRepository.getSingleUserBasicInfo(userid)
+            /**
+             * we aggressively believe it will get the result from net work
+             */
+        }
+        return result
+    }
+
+    val defaultUserInfo :UserBasicInfo = UserBasicInfo(
+        userId  =0,
+        userName= "...",
+        avatarUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+    )
+
 
     //here we use factory to make viewmodel more reusable, more information can
     //click here :https://stackoverflow.com/questions/67985585/why-do-we-need-viewmodelprovider-factory-to-pass-view-model-to-a-screen
@@ -72,7 +150,10 @@ class ErrandScreenViewModel(
                 Log.d("TDEBUG","${this} ${this[APPLICATION_KEY]} and ${APPLICATION_KEY}")
                 val application = (this[APPLICATION_KEY] as BITerrandApplication)
                 application_ref = application
-                ErrandScreenViewModel(demandRepository = application.container.demandRepository)
+                ErrandScreenViewModel(
+                    demandRepository = application.container.demandRepository,
+                    userBasicRepository = application.container.userbasicinfoRepository
+                )
             }
         }
         //I cannot figure out how to get the instance of application here

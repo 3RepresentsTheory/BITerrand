@@ -1,9 +1,11 @@
 package com.example.biterrand_fix.data
 
 import com.example.biterrand_fix.network.DemandsService
+import com.example.biterrand_fix.network.UserBasicService
 import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 
 
 /**
@@ -13,6 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 interface AppContainer{
 
     val demandRepository:DemandRepository
+    val userbasicinfoRepository:UserBasicRepository
 
     //more repository wait to add
 }
@@ -64,8 +67,16 @@ class DefaultAppContainer:AppContainer{
     private val DemandApiService : DemandsService by lazy {
         retrofit.create(DemandsService::class.java)
     }
+    private val UserBasicInfoService:UserBasicService by lazy{
+        retrofit.create(UserBasicService::class.java)
+    }
 
     override val demandRepository: DemandRepository by lazy{
         NetworkDemandRepository(DemandApiService)
     }
+    override val userbasicinfoRepository: UserBasicRepository by lazy{
+        NetworkUserBasicInfoRepository(UserBasicInfoService)
+    }
+
+
 }

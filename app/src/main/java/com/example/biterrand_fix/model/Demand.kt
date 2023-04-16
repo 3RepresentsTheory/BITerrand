@@ -32,7 +32,10 @@ data class Demand (
     var requirementSupplier: Long?,
 
     @SerializedName("time_stamp")
-    var timestamp: String
+    var timestamp: String,
+
+    @SerializedName("timeout")
+    var timeout:String,
 )
 
 @Serializable

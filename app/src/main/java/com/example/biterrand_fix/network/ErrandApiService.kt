@@ -13,7 +13,6 @@ interface DemandsService {
         @Query("last_id") id:Long
     ):List<Demand>
 
-
     @GET("photos")
     suspend fun getTestPhotos():List<MarsPhoto>
 }
