@@ -68,22 +68,20 @@ class ErrandScreenViewModel(
     fun getNewestDemandList(){
         viewModelScope.launch {
             _isLoading.value= true
-
             errandUiState = ErrandUiState.Loading
             errandUiState = try {
                 /**
                  * wait to modify here
                  */
-                Log.d("TDEBUG","call get demand list")
-//                val  listResult = demandRepository.getTestMarsPhotos()
+                Log.d("TDEBUG","call get newest demand list")
+
                 val  listResult = demandRepository.getDemandsList()
                 lastDemandId = listResult.lastOrNull()?.orderId?:lastDemandId
-                Log.d("TDEBUG","demand list return")
-                println(listResult)
+
+                Log.d("TDEBUG","demand newest list return with ${listResult}")
+
                 errandUiList=listResult
                 ErrandUiState.Success(listResult)
-
-
 
             } catch (e: IOException){
                 Log.d("TDEBUG","error with ${e}")
@@ -105,12 +103,11 @@ class ErrandScreenViewModel(
                 /**
                  * wait to modify here
                  */
-                Log.d("TDEBUG","call get demand list")
-//                val  listResult = demandRepository.getTestMarsPhotos()
+                Log.d("TDEBUG","call get demand list after d:${id}")
                 val  listResult = demandRepository.getDemandsListAfterId(id)
-                Log.d("TDEBUG","demand list return")
-                println(listResult)
+                Log.d("TDEBUG","after id:${id} demand list return with ${listResult}")
                 errandUiList=errandUiList+listResult
+                Log.d("TDEBUG","after id:${id} append to last of errandlist:${errandUiList}")
                 ErrandUiState.Success(errandUiList)
             } catch (e: IOException){
                 ErrandUiState.Error("IOException with ${e}")

@@ -68,12 +68,14 @@ fun ErrandScreenList(
                     val listState = rememberLazyListState()
                     /*buffer is a indicator when there is buffer number of item to the end,
                     * it will trigger then onLoadMore*/
-                    val buffer = 1
+                    val buffer = 2
                     val loadMore = remember{
                         derivedStateOf {
                             val layoutInfo = listState.layoutInfo
                             val totalItemNumber = layoutInfo.totalItemsCount
                             val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index?:0)+1
+                            Log.d("TDEBUG","lastVisible index is :${lastVisibleItemIndex}")
+                            Log.d("TDEBUG","total item number is :${totalItemNumber}")
                             lastVisibleItemIndex > (totalItemNumber-buffer)
                         }
                     }
