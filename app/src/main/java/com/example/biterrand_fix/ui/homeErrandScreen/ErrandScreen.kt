@@ -1,5 +1,6 @@
 package com.example.biterrand_fix.ui.homeErrandScreen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,6 +79,7 @@ fun ErrandScreen (
 //        FakeDemandSource.demandList[0],
 //        FakeDemandSource.demandList[1],
 //    )
+    Log.d("TEMPDEBUG","ErrandScreen is composing")
 
     Scaffold (
         topBar = {Text("just for test")},
@@ -93,7 +95,7 @@ fun ErrandScreen (
             is ErrandUiState.Loading -> {
                 Text(text = "isLoading/wait to implement")}
             is ErrandUiState.Error   -> {
-                Text(text = "isError/wait to implement")}
+                Text(text = "isError/wait to implement with ${(viewModel.errandUiState as ErrandUiState.Error).exceptionDescription}")}
             is ErrandUiState.Success -> {
                 ErrandScreenList(
                     viewModel = viewModel,

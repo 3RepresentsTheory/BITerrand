@@ -16,6 +16,8 @@ import com.example.biterrand_fix.data.DemandRepository
 import com.example.biterrand_fix.data.UserBasicRepository
 import com.example.biterrand_fix.model.Demand
 import com.example.biterrand_fix.model.UserBasicInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -24,6 +26,7 @@ import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 
 
 sealed interface ErrandUiState{
@@ -79,8 +82,10 @@ class ErrandScreenViewModel(
                 errandUiList=listResult
                 ErrandUiState.Success(listResult)
             } catch (e: IOException){
+                Log.d("TDEBUG","error with ${e}")
                 ErrandUiState.Error("IOException with ${e}")
             } catch (e: HttpException){
+                Log.d("TDEBUG","error with ${e}")
                 ErrandUiState.Error("HTTPException with ${e}")
             }
 
@@ -118,16 +123,22 @@ class ErrandScreenViewModel(
         getNewestDemandList()
     }
 
-    fun getUserNameAvatar(userid:Long):UserBasicInfo{
-        var result:UserBasicInfo = defaultUserInfo
-        viewModelScope.launch {
-            result=
-                userBasicRepository.getSingleUserBasicInfo(userid)
-            /**
-             * we aggressively believe it will get the result from net work
-             */
+
+    private val userBasicInfoCache = ConcurrentHashMap<Long, UserBasicInfo>()
+
+    suspend fun getUserNameAvatar(userid:Long):UserBasicInfo{
+        return userBasicInfoCache[userid]?:run{
+            var result:UserBasicInfo = defaultUserInfo
+            viewModelScope.async(Dispatchers.IO) {
+                result=
+                    userBasicRepository.getSingleUserBasicInfo(userid)
+                /**
+                 * we aggressively believe it will get the result from net work
+                 */
+            }.await()
+            userBasicInfoCache.put(userid,result)
+            result
         }
-        return result
     }
 
     val defaultUserInfo :UserBasicInfo = UserBasicInfo(

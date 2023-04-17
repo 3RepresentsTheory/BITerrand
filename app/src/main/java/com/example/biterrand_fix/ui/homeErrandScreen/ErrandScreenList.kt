@@ -1,5 +1,6 @@
 package com.example.biterrand_fix.ui.homeErrandScreen
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,9 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -63,12 +62,19 @@ fun ErrandScreenList(
                 LazyColumn(
                     content = {
                         items(errandUiState.demands){ demand->
-                            val userBasicInfo :UserBasicInfo = viewModel.getUserNameAvatar(
-                                userid=demand.requirementProposer
-                            )
+                            var userBasicInfoState  by remember {
+                                mutableStateOf(UserBasicInfo(
+                                    userId  =0,
+                                    userName= "...",
+                                    avatarUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                                ))
+                            }
+                            LaunchedEffect(demand.requirementProposer){
+                                userBasicInfoState=viewModel.getUserNameAvatar(demand.requirementProposer)
+                            }
                             ErrandDemandCard(
                                 demandInfo = demand,
-                                userBasicInfo = userBasicInfo
+                                userBasicInfo = userBasicInfoState
                             )
                         }
                     }
@@ -198,7 +204,7 @@ fun UserAddressState(
                 .width(40.dp)
                 .clip(CircleShape),
             model = ImageRequest.Builder(LocalContext.current)
-                .data(userBasicInfo.userName)
+                .data(userBasicInfo.avatarUrl)
                 .crossfade(true)
                 .build(),
             contentDescription = null,
