@@ -82,7 +82,10 @@ fun ErrandScreen (
     Log.d("TEMPDEBUG","ErrandScreen is composing")
 
     Scaffold (
-        topBar = {Text("just for test")},
+        topBar =
+        {
+                Text("just for test")
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { /*TODO*/ }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "post demand", tint = MaterialTheme.colorScheme.onPrimary)
@@ -100,7 +103,7 @@ fun ErrandScreen (
                 ErrandScreenList(
                     viewModel = viewModel,
                     errandUiState = viewModel.errandUiState,
-                    modifier = Modifier.padding(innerPadding)
+                    modifier = Modifier.padding(top = 100.dp)
                 )
             }
             else ->{

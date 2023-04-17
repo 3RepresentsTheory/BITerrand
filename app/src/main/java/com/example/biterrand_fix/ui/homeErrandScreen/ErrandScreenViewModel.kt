@@ -54,7 +54,7 @@ class ErrandScreenViewModel(
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore = _isLoadingMore.asStateFlow()
 
-    var lastDemandId: Long by mutableStateOf(0)
+    private var lastDemandId: Long by mutableStateOf(0)
 
     //should be modified later, it 's dangerous because some time when the
     //network failed , it would read old stale data
@@ -77,10 +77,14 @@ class ErrandScreenViewModel(
                 Log.d("TDEBUG","call get demand list")
 //                val  listResult = demandRepository.getTestMarsPhotos()
                 val  listResult = demandRepository.getDemandsList()
+                lastDemandId = listResult.lastOrNull()?.orderId?:lastDemandId
                 Log.d("TDEBUG","demand list return")
                 println(listResult)
                 errandUiList=listResult
                 ErrandUiState.Success(listResult)
+
+
+
             } catch (e: IOException){
                 Log.d("TDEBUG","error with ${e}")
                 ErrandUiState.Error("IOException with ${e}")
@@ -94,7 +98,7 @@ class ErrandScreenViewModel(
     }
     fun getDemandListAfterId(id:Long){
         viewModelScope.launch {
-            _isLoading.value= true
+            _isLoadingMore.value= true
 
             errandUiState = ErrandUiState.Loading
             errandUiState = try {
@@ -106,17 +110,21 @@ class ErrandScreenViewModel(
                 val  listResult = demandRepository.getDemandsListAfterId(id)
                 Log.d("TDEBUG","demand list return")
                 println(listResult)
-                errandUiList=listResult
-                ErrandUiState.Success(listResult)
+                errandUiList=errandUiList+listResult
+                ErrandUiState.Success(errandUiList)
             } catch (e: IOException){
                 ErrandUiState.Error("IOException with ${e}")
             } catch (e: HttpException){
                 ErrandUiState.Error("HTTPException with ${e}")
             }
 
-            _isLoading.value= false
+            _isLoadingMore.value= false
         }
 
+    }
+
+    fun loadingNewDemand(){
+        getDemandListAfterId(lastDemandId)
     }
 
     init {

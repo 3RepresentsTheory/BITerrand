@@ -6,20 +6,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 //import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +37,10 @@ import com.example.biterrand_fix.ui.theme.PurpleGrey40
 import com.example.biterrand_fix.ui.theme.PurpleGrey80
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun ErrandScreenList(
@@ -45,7 +48,8 @@ fun ErrandScreenList(
     viewModel: ErrandScreenViewModel,
     errandUiState: ErrandUiState
 ){
-    val isLoading by viewModel.isLoading.collectAsState()
+    val isLoading     by viewModel.isLoading.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
 
     /**
      * I don't know what this 's used for , it can
@@ -59,26 +63,61 @@ fun ErrandScreenList(
     ) {
         when(errandUiState){
             is ErrandUiState.Success->{
-                LazyColumn(
-                    content = {
-                        items(errandUiState.demands){ demand->
-                            var userBasicInfoState  by remember {
-                                mutableStateOf(UserBasicInfo(
-                                    userId  =0,
-                                    userName= "...",
-                                    avatarUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-                                ))
-                            }
-                            LaunchedEffect(demand.requirementProposer){
-                                userBasicInfoState=viewModel.getUserNameAvatar(demand.requirementProposer)
-                            }
-                            ErrandDemandCard(
-                                demandInfo = demand,
-                                userBasicInfo = userBasicInfoState
-                            )
+                BoxWithConstraints {
+                    val height = maxHeight-with(LocalDensity.current){80.dp}
+                    val listState = rememberLazyListState()
+                    /*buffer is a indicator when there is buffer number of item to the end,
+                    * it will trigger then onLoadMore*/
+                    val buffer = 1
+                    val loadMore = remember{
+                        derivedStateOf {
+                            val layoutInfo = listState.layoutInfo
+                            val totalItemNumber = layoutInfo.totalItemsCount
+                            val lastVisibleItemIndex = (layoutInfo.visibleItemsInfo.lastOrNull()?.index?:0)+1
+                            lastVisibleItemIndex > (totalItemNumber-buffer)
                         }
                     }
-                )
+
+                    LazyColumn(
+                        modifier=Modifier.height(height),
+                        state = listState,
+                        content = {
+                            item {
+                                Column{
+                                    Text(text = "Pseudo block")
+                                    Text(text = "Pseudo block")
+                                    Text(text = "Pseudo block")
+                                }
+                            }
+                            items(errandUiState.demands){ demand->
+                                var userBasicInfoState  by remember {
+                                    mutableStateOf(UserBasicInfo(
+                                        userId  =0,
+                                        userName= "...",
+                                        avatarUrl = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                                    ))
+                                }
+                                LaunchedEffect(demand.requirementProposer){
+                                    userBasicInfoState=viewModel.getUserNameAvatar(demand.requirementProposer)
+                                }
+                                ErrandDemandCard(
+                                    demandInfo = demand,
+                                    userBasicInfo = userBasicInfoState
+                                )
+                            }
+                            if(isLoadingMore){
+                                item{Text(text = "你刷的太快了")}
+                            }
+                        },
+                    )
+                    LaunchedEffect(loadMore){
+                        snapshotFlow {loadMore.value}
+                            .filter { it }
+                            .collect{
+                                viewModel.loadingNewDemand()
+                            }
+                    }
+                }
             }
             else ->{
                 Text(text = "not implement yet,this should be handled" +
@@ -228,8 +267,8 @@ fun ContentBlock(
     Row(
         modifier = Modifier
             .padding(8.dp)
-//                    .height(104.dp)
-            .wrapContentHeight()
+            .height(64.dp)
+//            .wrapContentHeight()
     ){
         Text(
             text = demandInfo.orderDescription,
