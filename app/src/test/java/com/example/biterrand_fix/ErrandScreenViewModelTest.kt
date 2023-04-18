@@ -3,7 +3,7 @@ package com.example.biterrand_fix
 import com.example.biterrand_fix.fake.FakeNetworkDemandRepository
 import com.example.biterrand_fix.rule.TestDispatcherRule
 import com.example.biterrand_fix.ui.ErrandScreenViewModel
-import com.example.biterrand_fix.ui.ErrandUiState
+import com.example.biterrand_fix.ui.ErrandUiInitialState
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -22,8 +22,8 @@ class ErrandScreenViewModelTest {
                 demandRepository = FakeNetworkDemandRepository()
             )
             assertEquals(
-                ErrandUiState.Success("Success with 2"),
-                errandScreenViewModel.errandUiState
+                ErrandUiInitialState.Success("Success with 2"),
+                errandScreenViewModel.errandUiInitialState
             )
         }
     }

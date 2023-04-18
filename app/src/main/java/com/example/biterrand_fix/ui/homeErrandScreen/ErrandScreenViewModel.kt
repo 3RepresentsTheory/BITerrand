@@ -1,6 +1,5 @@
 package com.example.biterrand_fix.ui
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +17,7 @@ import com.example.biterrand_fix.model.Demand
 import com.example.biterrand_fix.model.UserBasicInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -29,13 +29,21 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 
 
-sealed interface ErrandUiState{
+sealed interface ErrandUiInitialState{
 
-    data class Success(val demands: List<Demand>):ErrandUiState
-    data class Error(val exceptionDescription:String):ErrandUiState
+    data class Success(val demands: List<Demand>):ErrandUiInitialState
+    data class Error(val exceptionDescription:String):ErrandUiInitialState
     //        object Error:ErrandUiState
     //need fine grained loading state
-    object Loading:ErrandUiState
+    object Loading:ErrandUiInitialState
+}
+
+sealed interface ErrandUiAddItemState{
+    object  Success:ErrandUiAddItemState
+    data class Error(val exceptionDescription:String):ErrandUiAddItemState
+    object Loading:ErrandUiAddItemState
+
+    object NoMore:ErrandUiAddItemState
 }
 
 
@@ -54,6 +62,7 @@ class ErrandScreenViewModel(
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore = _isLoadingMore.asStateFlow()
 
+
     private var lastDemandId: Long by mutableStateOf(0)
 
     //should be modified later, it 's dangerous because some time when the
@@ -61,15 +70,18 @@ class ErrandScreenViewModel(
     var errandUiList:List<Demand> by mutableStateOf(listOf())
         private set
 
-    var errandUiState: ErrandUiState by mutableStateOf(ErrandUiState.Loading)
+    var errandUiInitialState: ErrandUiInitialState by mutableStateOf(ErrandUiInitialState.Loading)
+        private set
+
+    var errandUiAddItemState: ErrandUiAddItemState by mutableStateOf(ErrandUiAddItemState.Success)
         private set
 
 
-    fun getNewestDemandList(){
+    fun getInitNewestDemandList(){
         viewModelScope.launch {
             _isLoading.value= true
-            errandUiState = ErrandUiState.Loading
-            errandUiState = try {
+            errandUiInitialState = ErrandUiInitialState.Loading
+            errandUiInitialState = try {
                 /**
                  * wait to modify here
                  */
@@ -81,14 +93,43 @@ class ErrandScreenViewModel(
                 Log.d("TDEBUG","demand newest list return with ${listResult}")
 
                 errandUiList=listResult
-                ErrandUiState.Success(listResult)
+                ErrandUiInitialState.Success(listResult)
 
             } catch (e: IOException){
                 Log.d("TDEBUG","error with ${e}")
-                ErrandUiState.Error("IOException with ${e}")
+                ErrandUiInitialState.Error("IOException with ${e}")
             } catch (e: HttpException){
                 Log.d("TDEBUG","error with ${e}")
-                ErrandUiState.Error("HTTPException with ${e}")
+                ErrandUiInitialState.Error("HTTPException with ${e}")
+            }
+
+            _isLoading.value= false
+        }
+    }
+    fun getAfterNewestDemandList(){
+        viewModelScope.launch {
+            _isLoading.value= true
+            delay(500)
+            errandUiAddItemState = ErrandUiAddItemState.Loading
+            errandUiAddItemState = try {
+                /**
+                 * wait to modify here
+                 */
+                Log.d("TDEBUG","call get newest demand list")
+
+                val  listResult = demandRepository.getDemandsList()
+                lastDemandId = listResult.lastOrNull()?.orderId?:lastDemandId
+
+                Log.d("TDEBUG","demand newest list return with ${listResult}")
+
+                errandUiList=listResult
+                ErrandUiAddItemState.Success
+            } catch (e: IOException){
+                Log.d("TDEBUG","error with ${e} in adding")
+                ErrandUiAddItemState.Error("IOException with ${e}")
+            } catch (e: HttpException){
+                Log.d("TDEBUG","error with ${e} in adding")
+                ErrandUiAddItemState.Error("HTTPException with ${e}")
             }
 
             _isLoading.value= false
@@ -97,22 +138,27 @@ class ErrandScreenViewModel(
     fun getDemandListAfterId(id:Long){
         viewModelScope.launch {
             _isLoadingMore.value= true
-
-            errandUiState = ErrandUiState.Loading
-            errandUiState = try {
+            delay(1000L)
+            errandUiAddItemState = ErrandUiAddItemState.Loading
+            errandUiAddItemState = try {
                 /**
                  * wait to modify here
                  */
                 Log.d("TDEBUG","call get demand list after d:${id}")
+
                 val  listResult = demandRepository.getDemandsListAfterId(id)
+                lastDemandId = listResult.lastOrNull()?.orderId?:lastDemandId
+
                 Log.d("TDEBUG","after id:${id} demand list return with ${listResult}")
+
                 errandUiList=errandUiList+listResult
+
                 Log.d("TDEBUG","after id:${id} append to last of errandlist:${errandUiList}")
-                ErrandUiState.Success(errandUiList)
+                ErrandUiAddItemState.Success
             } catch (e: IOException){
-                ErrandUiState.Error("IOException with ${e}")
+                ErrandUiAddItemState.Error("IOException with ${e}")
             } catch (e: HttpException){
-                ErrandUiState.Error("HTTPException with ${e}")
+                ErrandUiAddItemState.Error("HTTPException with ${e}")
             }
 
             _isLoadingMore.value= false
@@ -124,8 +170,10 @@ class ErrandScreenViewModel(
         getDemandListAfterId(lastDemandId)
     }
 
+
+
     init {
-        getNewestDemandList()
+        getInitNewestDemandList()
     }
 
 
@@ -176,6 +224,7 @@ class ErrandScreenViewModel(
         lateinit var application_ref:BITerrandApplication
     }
 }
+
 
 
 fun UserFriendlyTime(
