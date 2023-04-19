@@ -170,14 +170,17 @@ class ErrandScreenViewModel(
         getDemandListAfterId(lastDemandId)
     }
 
-
-
     init {
         getInitNewestDemandList()
     }
 
-
     private val userBasicInfoCache = ConcurrentHashMap<Long, UserBasicInfo>()
+
+    /*TODO*/
+    /**
+     * here need to add another mechanism,
+     * or modifiy the repository to add cache,
+     */
 
     suspend fun getUserNameAvatar(userid:Long):UserBasicInfo{
         return userBasicInfoCache[userid]?:run{

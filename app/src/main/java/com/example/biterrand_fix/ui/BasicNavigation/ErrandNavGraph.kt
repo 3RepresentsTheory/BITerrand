@@ -1,5 +1,6 @@
 package com.example.biterrand_fix.ui.BasicNavigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -31,8 +32,7 @@ fun ErrandNavHost(
     ){
         composable(HomeDestination.route){
             ErrandScreen(
-                navigateToDemandEntry   =
-                    {navController.navigate("${DemandGetDestination.routeWithArgs}/${it}")},
+                navigateToDemandEntry   = { navController.navigate("${DemandGetDestination.route}/${it}") },
                 navigateToProposeDemand =
                     {navController.navigate(DemandProposeDestination.route)},
                 bottomMenu = {ErrandBottonNavBar(navController = navController)},

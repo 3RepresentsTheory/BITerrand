@@ -13,6 +13,8 @@ interface DemandRepository {
 
     suspend fun getDemandsListAfterId(lastId:Long):List<Demand>
 
+    suspend fun getDemandById(id:Long):Demand
+
     @TestOnly
 //   use for test the sample data
     suspend fun getTestMarsPhotos():List<MarsPhoto>
@@ -32,6 +34,10 @@ class NetworkDemandRepository(val demandApiService: DemandsService):DemandReposi
 
     override suspend fun getDemandsListAfterId(lastId: Long): List<Demand> {
         return demandApiService.getOrdersBelowLaterID(lastId)
+    }
+
+    override suspend fun getDemandById(id: Long): Demand {
+        return demandApiService.getOrderById(id)
     }
 
     @TestOnly

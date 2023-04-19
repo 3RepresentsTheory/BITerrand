@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.map
 fun ErrandScreenList(
     modifier: Modifier = Modifier,
     viewModel: ErrandScreenViewModel,
+    navigateToDemandEntry:(Long)->Unit,
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
@@ -133,7 +134,8 @@ fun ErrandScreenList(
                         }
                         ErrandDemandCard(
                             demandInfo = demand,
-                            userBasicInfo = userBasicInfoState
+                            userBasicInfo = userBasicInfoState,
+                            navigateToDemandEntry = navigateToDemandEntry
                         )
                     }
                     if (isLoadingShow) {
@@ -153,11 +155,13 @@ fun ErrandScreenList(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ErrandDemandCard(
     demandInfo: Demand,
     modifier: Modifier = Modifier,
-    userBasicInfo: UserBasicInfo
+    userBasicInfo: UserBasicInfo,
+    navigateToDemandEntry: (Long) -> Unit,
 ) {
     Card(
         modifier = modifier
@@ -165,6 +169,7 @@ fun ErrandDemandCard(
             .wrapContentHeight()
 //            .height(250.dp)
             .fillMaxWidth(),
+        onClick = {navigateToDemandEntry(demandInfo.orderId)}
     ) {
 
         Column(modifier = Modifier.padding(8.dp)) {
@@ -266,7 +271,7 @@ fun UserAddressState(
         AsyncImage(
             modifier = Modifier
                 .height(40.dp)
-                .width(40.dp)
+                .aspectRatio(1f)
                 .clip(CircleShape),
             model = ImageRequest.Builder(LocalContext.current)
                 .data(userBasicInfo.avatarUrl)

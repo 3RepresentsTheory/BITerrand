@@ -8,6 +8,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.*
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,50 +24,51 @@ object HomeDestination:NavigationDestination{
 
 @Composable
 fun ErrandScreen (
-    navigateToDemandEntry:()->Unit,
-    navigateToProposeDemand:(Int)->Unit,
+    navigateToDemandEntry:(Long)->Unit,
+    navigateToProposeDemand:()->Unit,
     bottomMenu:@Composable ()->Unit,
     modifier: Modifier = Modifier,
     viewModel: ErrandScreenViewModel = viewModel(factory = ErrandScreenViewModel.Factory),
 ){
-//    val mockList = listOf(
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//        FakeDemandSource.demandList[0],
-//        FakeDemandSource.demandList[1],
-//    )
-    Log.d("TEMPDEBUG","ErrandScreen is composing")
-
     Scaffold (
         topBar =
         {
                 Text("just for test")
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { /*TODO*/ }) {
+            FloatingActionButton(
+                onClick = {
+            /*TODO*/
+                }
+            )
+            {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "post demand", tint = MaterialTheme.colorScheme.onPrimary)
             }
         },
-//        floatingActionButtonPosition = centerDocked
         bottomBar = bottomMenu
     ){  innerPadding->
+        //initial loading page
         when(viewModel.errandUiInitialState){
             is ErrandUiInitialState.Loading -> {
-                Text(text = "isLoading/wait to implement")}
+                Text(text = "isLoading/wait to implement")
+            }
             is ErrandUiInitialState.Error   -> {
-                Text(text = "isError/wait to implement with ${(viewModel.errandUiInitialState as ErrandUiInitialState.Error).exceptionDescription}")}
+                Column(
+                    modifier=Modifier.fillMaxSize()
+                ) {
+                    Text(text = "isError/wait to implement with ${(viewModel.errandUiInitialState as ErrandUiInitialState.Error).exceptionDescription}")
+                    Button(
+                        onClick = {viewModel.getInitNewestDemandList()}
+                    ){
+                        Text(text = "点击重试")
+                    }
+                }
+            }
             is ErrandUiInitialState.Success -> {
                 ErrandScreenList(
                     viewModel = viewModel,
-                    modifier = Modifier.padding(top = 100.dp)
+                    modifier = Modifier.padding(innerPadding),
+                    navigateToDemandEntry = navigateToDemandEntry
                 )
             }
             else ->{

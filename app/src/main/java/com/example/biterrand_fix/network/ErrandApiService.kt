@@ -13,6 +13,11 @@ interface DemandsService {
         @Query("last_id") id:Long
     ):List<Demand>
 
+    @GET("demandSpecific")
+    suspend fun getOrderById(
+        @Query("order_id") id:Long
+    ):Demand
+
     @GET("photos")
     suspend fun getTestPhotos():List<MarsPhoto>
 }

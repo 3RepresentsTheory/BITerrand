@@ -17,3 +17,8 @@ val YellowGrey = Color(0xFFDADAC4)
 
 val PriceRed = Color(0xFFFC011A)
 val PriceGold = Color(0xfffccc3e)
+
+val DeepBlue = Color(0xFF196390)
+val ShallowBlue = Color(0xFFd4e3f8)
+val WhiteBlue = Color(0xFFe7f0f7)
+val GreyBlue = Color(0xFFdee3e9)
