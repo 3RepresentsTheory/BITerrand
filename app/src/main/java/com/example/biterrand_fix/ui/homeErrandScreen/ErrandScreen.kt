@@ -38,7 +38,7 @@ fun ErrandScreen (
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-            /*TODO*/
+                    navigateToProposeDemand()
                 }
             )
             {

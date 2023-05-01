@@ -8,11 +8,19 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.biterrand_fix.BITerrandApplication
 import com.example.biterrand_fix.ui.DemandGet.DemandGetDestination
 import com.example.biterrand_fix.ui.DemandGet.DemandGetScreenViewModel
+import com.example.biterrand_fix.ui.DemandPropose.DemandProposeScreenViewModel
 
 object AppViewModelProvider{
     val Factory = viewModelFactory {
         initializer {
             DemandGetScreenViewModel(
+                this.createSavedStateHandle(),
+                ErrandApplication().container.demandRepository,
+                ErrandApplication().container.userbasicinfoRepository
+            )
+        }
+        initializer {
+            DemandProposeScreenViewModel(
                 this.createSavedStateHandle(),
                 ErrandApplication().container.demandRepository,
                 ErrandApplication().container.userbasicinfoRepository

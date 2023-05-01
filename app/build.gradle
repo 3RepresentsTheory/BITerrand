@@ -90,4 +90,8 @@ dependencies {
     //swipe and refresh:
     implementation "com.google.accompanist:accompanist-swiperefresh:0.27.0"
 
+    //okhttp
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
+
 }

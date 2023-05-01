@@ -48,7 +48,7 @@ class DefaultAppContainer:AppContainer{
      * cleartext transformation
      */
 
-    private val BASE_URL = "http://43.138.15.233:8946/"
+    private val BASE_URL = "http://101.43.254.234:8946/"
 
 //    private val BASE_URL = "https://android-kotlin-fun-mars-server.appspot.com/"
 
