@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.biterrand_fix.model.Demand
@@ -43,41 +44,53 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
-object DemandProposeDestination :NavigationDestination{
+object DemandProposeDestination : NavigationDestination {
     override val route: String = "demandpropose"
     override val title: String = "我来叫单"
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DemandProposeScreen(
     modifier: Modifier = Modifier,
-    navigateBack:()->Unit,
-    viewModel: DemandProposeScreenViewModel  = viewModel(factory=AppViewModelProvider.Factory)
-){
+    navigateBack: () -> Unit,
+    viewModel: DemandProposeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
     //coroutine use for post demand
     val coroutineScope = rememberCoroutineScope()
+    BackHandler(viewModel.sheetState.isVisible) {
+        coroutineScope.launch { viewModel.sheetState.hide() }
+    }
 
-    Scaffold(
-        topBar = {
-            Text(text = "Propose a demand")
-        },
-        bottomBar = {
-            Button(onClick = {
-                coroutineScope.launch {
-                    viewModel.proposeDemand()
-                    navigateBack()
-                }
-            }) {
-                Text("提交")
-            }
-        }
+    ModalBottomSheetLayout(
+        sheetState = viewModel.sheetState,
+        sheetContent = { BottomSheet(viewModel) },
+        modifier = Modifier.fillMaxSize()
     ) {
-        innerpadding->
-        DemandProposeBody(
-            modifier= Modifier.padding(innerpadding),
-            onValueChange = viewModel::updateUiState,
-            proposeUiState = viewModel.proposeUiState,
-        )
+
+        Scaffold(
+            topBar = {
+                Text(text = "Propose a demand")
+            },
+            bottomBar = {
+                Button(onClick = {
+                    coroutineScope.launch {
+                        viewModel.proposeDemand()
+                        navigateBack()
+                    }
+                }) {
+                    Text("提交")
+                }
+            }
+        ) { innerpadding ->
+            DemandProposeBody(
+                modifier = Modifier.padding(innerpadding),
+                onValueChange = viewModel::updateUiState,
+                proposeUiState = viewModel.proposeUiState,
+                sheetState = viewModel.sheetState
+            )
+        }
+
     }
 }
 
@@ -87,34 +100,27 @@ fun DemandProposeBody(
     modifier: Modifier = Modifier,
     onValueChange: (Demand) -> Unit,
     proposeUiState: proposeUiState,
+    sheetState: ModalBottomSheetState
 //    onSelectPhoto: () -> Unit,
 //    onPhotoTake: () -> Unit
-){
-    //添加图片的底部选项
-    val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded }
-    )
-    val coroutineScope = rememberCoroutineScope()
-    BackHandler(sheetState.isVisible) {
-        coroutineScope.launch { sheetState.hide() }
-    }
+) {
 
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-//        sheetContent = { BottomSheet(onSelectPhoto,onPhotoTake) },
-        sheetContent = { BottomSheet() },
+
+    val coroutineScope = rememberCoroutineScope()
+    Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Spacer(modifier = Modifier.padding(32.dp))
-            DemandForm(
-                demand = proposeUiState.demandInfo,
-                onValueChange = onValueChange
-            )
-        }
+        Spacer(modifier = Modifier.padding(32.dp))
+        DemandForm(
+            proposeUiState = proposeUiState,
+            onValueChange = onValueChange,
+            onAddPhotoClick = {
+                coroutineScope.launch {
+                    if (sheetState.isVisible) sheetState.hide()
+                    else sheetState.show()
+                }
+            }
+        )
     }
 
 }
@@ -122,17 +128,20 @@ fun DemandProposeBody(
 
 @Composable
 fun DemandForm(
-    demand: Demand,
-    modifier: Modifier =Modifier,
-    onValueChange:(Demand)->Unit ={},
-){
+    proposeUiState: proposeUiState,
+    modifier: Modifier = Modifier,
+    onValueChange: (Demand) -> Unit = {},
+    onAddPhotoClick: () -> Unit = {},
+) {
     DescriptionInputBox(
-        demand = demand,
+        demand = proposeUiState.demandInfo,
         onValueChange = onValueChange
     )
+    AddingPhotoBlock(
+        onAddPhotoClick = onAddPhotoClick,
+        photoUiState = proposeUiState.photoUiState
+    )
 }
-
-
 
 
 /**
@@ -144,7 +153,7 @@ fun DescriptionInputBox(
     demand: Demand,
     onValueChange: (Demand) -> Unit,
     modifier: Modifier = Modifier,
-){
+) {
     val scrollState = rememberScrollState(0)
     val mCustomTextSelectionColors = TextSelectionColors(
         handleColor = DeepBlue,
@@ -160,7 +169,7 @@ fun DescriptionInputBox(
                     .height(136.dp)
                     .verticalScroll(scrollState),
                 value = demand.orderDescription,
-                onValueChange = {onValueChange(demand.copy(orderDescription = it))},
+                onValueChange = { onValueChange(demand.copy(orderDescription = it)) },
                 placeholder = {
                     Text(
                         text = "大家需要知道详细的派送地址，个人联系方式，以及跑腿物品信息...",
@@ -190,133 +199,99 @@ fun DescriptionInputBox(
 /**
  * bottomSheet for selecting photo
  */
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun BottomSheet(
-//    onSelectPhoto: ()->Unit,
-//    onPhotoTake:   ()->Unit
-){
-    var getphoto:Uri? = null
+    viewModel: DemandProposeScreenViewModel
+) {
+//    var getphoto: Uri? = null
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val selectImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ){result->
+        if(result.resultCode==Activity.RESULT_OK){
+            viewModel.updateUiImageState()
+        }else{
+            Toast.makeText(context, "没有加载图片", Toast.LENGTH_SHORT).show()
+        }
+    }
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ){isGranted->
+        if(isGranted){
+            // 授权通过，重新启动拍照程序
+            selectImageLauncher.launch(
+                viewModel.createTempFileAndLoadIntent(context)
+            )
+            coroutineScope.launch {
+                if (viewModel.sheetState.isVisible) viewModel.sheetState.hide()
+                else viewModel.sheetState.show()
+            }
+        }else{
+            Toast.makeText(context, "没有授权，无法使用照相机", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = Modifier.padding(32.dp)
     ) {
-        Text(text = "选择本机照片")
+        Button(onClick = {
+            //检查授权Permission check
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.CAMERA
+                )
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                // 请求相机权限
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            } else {
+                // 启动拍照程序
+                selectImageLauncher.launch(
+                    viewModel.createTempFileAndLoadIntent(context)
+                )
+                coroutineScope.launch {
+                    if (viewModel.sheetState.isVisible) viewModel.sheetState.hide()
+                    else viewModel.sheetState.show()
+                }
+            }
+
+        }
+        ) {
+            Text(text = "使用照相机拍摄")
+        }
+//        Spacer(modifier = Modifier.height(32.dp))
 //        Button(onClick = {getphoto=onSelectPhoto()}) {
 //            Text(text = "选择本机照片")
 //        }
-//        Spacer(modifier = Modifier.height(32.dp))
-//        Button(onClick = {getphoto=onPhotoTake()}) {
-//            Text(text = "是用照相机拍摄",)
-//        }
     }
 }
+
+
+
 @Composable
-fun AddPhotoBlock(
-    modifier: Modifier = Modifier,
-    onPhotoTake: (Uri)->Unit
-){
-    var GetSuccess:Boolean by remember{
-        mutableStateOf(false)
-    }
-    var GetGranted:Boolean by remember {
-        mutableStateOf(false)
-    }
-    var photoUri: Uri? by remember {
-        mutableStateOf(null)
-    }
-
+fun AddingPhotoBlock(
+    onAddPhotoClick: () -> Unit,
+    photoUiState: photoUiState,
+) {
     val context = LocalContext.current
-
-    val selectImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if(result.resultCode== Activity.RESULT_OK){
-            GetSuccess = true
-        }else{
-            /*failed*/
-            GetSuccess = false
-            Toast.makeText(context,"没有加载图片", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        GetGranted = isGranted
-        //code below only use for debug
-        if (isGranted) {
-            // 启动相机应用程序
-            Log.d("TDEBUG","CAMERA GRANTED")
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            val tempFile = File.createTempFile("tempPicture",".png",context.cacheDir)
-            photoUri = FileProvider.getUriForFile(context,context.packageName+".fileprovider",tempFile)
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            GetSuccess=false
-            selectImageLauncher.launch(takePictureIntent)
-        } else {
-            // 处理未授予相机权限的情况
-            Log.d("TDEBUG","CAMERA NOT GRANTED")
-            Toast.makeText(context,"没有授权，无法使用照相机", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    Column{
-        Button(
-            onClick = {
-                //检查授权Permission check
-                if(ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED
-                ){
-                    // 请求相机权限
-                    requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-                }else{
-                    val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    val tempFile = File.createTempFile("tempPicture",".png",context.cacheDir)
-                    photoUri = FileProvider.getUriForFile(context,context.packageName+".fileprovider",tempFile)
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                    GetSuccess=false
-                    selectImageLauncher.launch(takePictureIntent)
-                }
-            }
-        ) {
-            Text("点击进行拍照")
-        }
-
-        if(GetSuccess){
-            //Use Coil to display the selected image
-            val painter = rememberAsyncImagePainter(
-                ImageRequest
-                    .Builder(LocalContext.current)
-                    .data(data = photoUri)
-                    .build()
-            )
-
-//            Image(
-//                painter = painter,
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .padding(5.dp)
-//                    .fillMaxWidth()
-//                    .clickable {
-//                        coroutineScope.launch {
-//                            if (sheetState.isVisible) sheetState.hide()
-//                            else sheetState.show()
-//                        }
-//                    }
-//                    .border(6.0.dp, Color.Gray),
-//
-//                contentScale = ContentScale.Crop
-//            )
-        }
-    }
+    AsyncImage(
+        model = if (photoUiState.isPhotoAdded) photoUiState.addPhotoUrl else null,
+        modifier = Modifier
+            .aspectRatio(1f)
+            .height(32.dp)
+            .clickable { onAddPhotoClick() },
+        contentScale = ContentScale.Crop,
+        contentDescription = "selected Image"
+    )
 }
-
 
 
 @Preview
 @Composable
-fun DemandProposeBodyPreview(){
+fun DemandProposeBodyPreview() {
 //    BITerrand_fixTheme {
 //        DemandProposeBody(
 //            modifier = Modifier.fillMaxSize()

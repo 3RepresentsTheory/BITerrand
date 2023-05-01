@@ -1,5 +1,6 @@
 package com.example.biterrand_fix
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +24,23 @@ class MainActivity : ComponentActivity() {
                     ErrandApp()
                 }
             }
+        }
+    }
+
+    /**
+     * clear the cache data produced in activity
+     */
+    override fun onStop() {
+        clearCache(this)
+        super.onStop()
+    }
+}
+
+fun clearCache(context: Context){
+    val cacheDir = context.cacheDir
+    if(cacheDir.isDirectory){
+        cacheDir.listFiles()?.forEach { file ->
+            file.delete()
         }
     }
 }
