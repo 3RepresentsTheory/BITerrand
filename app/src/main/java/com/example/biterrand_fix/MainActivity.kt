@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
      */
     override fun onStop() {
         Log.d(proposeDebugTag,"activity onStop")
-        clearCache(this)
+//        clearCache(this)
         super.onStop()
     }
 

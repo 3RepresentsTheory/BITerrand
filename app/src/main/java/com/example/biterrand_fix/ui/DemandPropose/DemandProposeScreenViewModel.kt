@@ -1,8 +1,11 @@
 package com.example.biterrand_fix.ui.DemandPropose
 
+import android.app.Service
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
+import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -22,9 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.biterrand_fix.data.DemandRepository
 import com.example.biterrand_fix.data.UserBasicRepository
 import com.example.biterrand_fix.model.Demand
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.File
 
 
@@ -77,7 +79,6 @@ class DemandProposeScreenViewModel (
             demandRepository.uploadDemand(proposeUiState.demandInfo)
         }
     }
-
     fun updateUiState(demand:Demand){
         Log.d(proposeDebugTag,"update demand info")
         proposeUiState = proposeUiState.copy(
@@ -100,6 +101,7 @@ class DemandProposeScreenViewModel (
         Log.d(proposeDebugTag,"create a temp file and load intent")
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         val tempFile = File.createTempFile("tempPicture", ".png", context.cacheDir)
+        Log.d(proposeDebugTag,"temp file locate in :${tempFile}")
         latestUsedUri = FileProvider.getUriForFile(
             context,
             context.packageName + ".fileprovider",
@@ -117,8 +119,6 @@ class DemandProposeScreenViewModel (
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded }
     )
 
-
-
     private fun validateInput(
         uiInputForm:Demand = proposeUiState.demandInfo
     ): Boolean {
@@ -131,9 +131,56 @@ class DemandProposeScreenViewModel (
         }
     }
 
+    var isHoldOnServiceRunning by mutableStateOf(false)
+        private set
+
+    fun startHoldOnService(context: Context){
+        val intent = Intent(context,HoldOnService::class.java)
+        context.startService(intent)
+        isHoldOnServiceRunning = true
+    }
+
+    fun stopHoldOnService(context: Context){
+        val intent = Intent(context,HoldOnService::class.java)
+        context.stopService(intent)
+        isHoldOnServiceRunning = false
+    }
 
 
 
 }
 
 
+/**
+ * background service used to prevent being kill after onStop when using camera and facing
+ * system killing process for high memory demand
+ */
+class HoldOnService : Service() {
+    // 定义一个标记来表示 Service 是否在运行
+    private var isRunning = false
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 在 onStartCommand 方法中执行任务逻辑
+        isRunning = true
+        CoroutineScope(Dispatchers.Main).launch {
+            while (isRunning) {
+                Log.d(proposeDebugTag, "prevent being killed when taking photos in ${Thread.currentThread().name}")
+                // 使用 delay() 函数等待 1 秒钟
+                delay(1000)
+            }
+        }
+        return START_STICKY
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        // 返回 null 表示 Service 不支持绑定
+        return null
+    }
+
+    override fun onDestroy() {
+        // 在 onDestroy 方法中停止任务逻辑
+        Log.d(proposeDebugTag,"destroy the hold service")
+        isRunning = false
+        super.onDestroy()
+    }
+}

@@ -225,6 +225,7 @@ fun BottomSheet(
         }else{
             Toast.makeText(context, "没有加载图片", Toast.LENGTH_SHORT).show()
         }
+        viewModel.stopHoldOnService(context)
     }
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -242,13 +243,16 @@ fun BottomSheet(
             }
         }else{
             Toast.makeText(context, "没有授权，无法使用照相机", Toast.LENGTH_SHORT).show()
+            viewModel.stopHoldOnService(context)
         }
+
     }
 
     Column(
         modifier = Modifier.padding(32.dp)
     ) {
         Button(onClick = {
+            viewModel.startHoldOnService(context)
             //检查授权Permission check
             if (ContextCompat.checkSelfPermission(
                     context,
