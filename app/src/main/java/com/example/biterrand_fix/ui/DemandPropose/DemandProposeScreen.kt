@@ -44,6 +44,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
+
+
+
+val proposeDebugTag:String = "proposeDebugTag"
 object DemandProposeDestination : NavigationDestination {
     override val route: String = "demandpropose"
     override val title: String = "我来叫单"
@@ -52,11 +56,12 @@ object DemandProposeDestination : NavigationDestination {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun DemandProposeScreen(
-    modifier: Modifier = Modifier,
     navigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: DemandProposeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     //coroutine use for post demand
+    Log.d(proposeDebugTag,"proposeScreen compose")
     val coroutineScope = rememberCoroutineScope()
     BackHandler(viewModel.sheetState.isVisible) {
         coroutineScope.launch { viewModel.sheetState.hide() }
@@ -106,6 +111,7 @@ fun DemandProposeBody(
 ) {
 
 
+    Log.d(proposeDebugTag,"proposebody compose")
     val coroutineScope = rememberCoroutineScope()
     Column(
         modifier = Modifier.fillMaxSize()
@@ -133,11 +139,13 @@ fun DemandForm(
     onValueChange: (Demand) -> Unit = {},
     onAddPhotoClick: () -> Unit = {},
 ) {
+    Log.d(proposeDebugTag,"demand form compose")
     DescriptionInputBox(
         demand = proposeUiState.demandInfo,
         onValueChange = onValueChange
     )
     AddingPhotoBlock(
+        modifier = Modifier.height(160.dp),
         onAddPhotoClick = onAddPhotoClick,
         photoUiState = proposeUiState.photoUiState
     )
@@ -212,6 +220,7 @@ fun BottomSheet(
         contract = ActivityResultContracts.StartActivityForResult()
     ){result->
         if(result.resultCode==Activity.RESULT_OK){
+            Log.d(proposeDebugTag,"photo successfully take")
             viewModel.updateUiImageState()
         }else{
             Toast.makeText(context, "没有加载图片", Toast.LENGTH_SHORT).show()
@@ -222,10 +231,12 @@ fun BottomSheet(
     ){isGranted->
         if(isGranted){
             // 授权通过，重新启动拍照程序
+            Log.d(proposeDebugTag,"start the camera")
             selectImageLauncher.launch(
                 viewModel.createTempFileAndLoadIntent(context)
             )
             coroutineScope.launch {
+                Log.d(proposeDebugTag,"Hide the sheet")
                 if (viewModel.sheetState.isVisible) viewModel.sheetState.hide()
                 else viewModel.sheetState.show()
             }
@@ -249,10 +260,12 @@ fun BottomSheet(
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             } else {
                 // 启动拍照程序
+                Log.d(proposeDebugTag,"start the camera")
                 selectImageLauncher.launch(
                     viewModel.createTempFileAndLoadIntent(context)
                 )
                 coroutineScope.launch {
+                    Log.d(proposeDebugTag,"Hide the sheet")
                     if (viewModel.sheetState.isVisible) viewModel.sheetState.hide()
                     else viewModel.sheetState.show()
                 }
@@ -273,16 +286,21 @@ fun BottomSheet(
 
 @Composable
 fun AddingPhotoBlock(
+    modifier: Modifier = Modifier,
     onAddPhotoClick: () -> Unit,
     photoUiState: photoUiState,
 ) {
     val context = LocalContext.current
+    Log.d(proposeDebugTag,"photo composing: in photoUistate:isphotoadd:${photoUiState.isPhotoAdded} " +
+            "photoUrl:${photoUiState.addPhotoUrl}")
     AsyncImage(
         model = if (photoUiState.isPhotoAdded) photoUiState.addPhotoUrl else null,
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .height(32.dp)
-            .clickable { onAddPhotoClick() },
+            .clickable {
+                /*TODO 这里点击的时候没做好，如果用户没把键盘放下，这个键盘会挡住底部*/
+                onAddPhotoClick() },
         contentScale = ContentScale.Crop,
         contentDescription = "selected Image"
     )

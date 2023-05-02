@@ -2,6 +2,7 @@ package com.example.biterrand_fix.ui.DemandGet
 
 import com.example.biterrand_fix.R
 import android.telephony.mbms.MbmsDownloadReceiver
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -40,6 +41,7 @@ object DemandGetDestination : NavigationDestination {
     val routeWithArgs = "$route/{$demandIdArg}"
 }
 
+val getDebugTag:String = "getDebugTag"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DemandGetScreen(
@@ -47,6 +49,7 @@ fun DemandGetScreen(
     navigateBack: () -> Unit,
     viewModel: DemandGetScreenViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    Log.d(getDebugTag,"demand get screen compose")
     Scaffold(
         topBar = {
             Text(text = "in detail")

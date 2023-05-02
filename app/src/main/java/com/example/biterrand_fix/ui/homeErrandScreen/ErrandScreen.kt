@@ -21,6 +21,7 @@ object HomeDestination:NavigationDestination{
     override val title = "来跑腿"
 }
 
+val errandScreenDebug = "errandScreenDebug"
 
 @Composable
 fun ErrandScreen (
@@ -30,6 +31,7 @@ fun ErrandScreen (
     modifier: Modifier = Modifier,
     viewModel: ErrandScreenViewModel = viewModel(factory = ErrandScreenViewModel.Factory),
 ){
+    Log.d(errandScreenDebug,"errand screeen compose")
     Scaffold (
         topBar =
         {

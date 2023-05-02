@@ -44,8 +44,9 @@ fun ErrandNavHost(
             )
         }
         composable(DemandProposeDestination.route){
+            val navigateBack:()->Unit = {navController.navigateUp()}
             DemandProposeScreen(
-                navigateBack = {navController.navigateUp()}
+                navigateBack = navigateBack
             )
         }
         composable(

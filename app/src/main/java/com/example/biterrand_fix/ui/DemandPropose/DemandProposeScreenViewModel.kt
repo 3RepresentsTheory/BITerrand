@@ -79,12 +79,14 @@ class DemandProposeScreenViewModel (
     }
 
     fun updateUiState(demand:Demand){
+        Log.d(proposeDebugTag,"update demand info")
         proposeUiState = proposeUiState.copy(
             demandInfo = demand,
             isFormValid =validateInput(demand),
         )
     }
     fun updateUiImageState(){
+        Log.d(proposeDebugTag,"update photo info")
         proposeUiState = proposeUiState.copy(
             photoUiState = photoUiState(
                 isPhotoAdded = true,
@@ -95,6 +97,7 @@ class DemandProposeScreenViewModel (
     }
 
     fun createTempFileAndLoadIntent(context: Context):Intent{
+        Log.d(proposeDebugTag,"create a temp file and load intent")
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         val tempFile = File.createTempFile("tempPicture", ".png", context.cacheDir)
         latestUsedUri = FileProvider.getUriForFile(
