@@ -97,6 +97,11 @@ class DemandProposeScreenViewModel (
         proposeUiState.demandInfo.imageUrl="yes!"
     }
 
+    fun uploadLocalImage(url:Uri){
+        latestUsedUri = url
+        updateUiImageState()
+    }
+
     fun createTempFileAndLoadIntent(context: Context):Intent{
         Log.d(proposeDebugTag,"create a temp file and load intent")
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
