@@ -312,6 +312,7 @@ fun ContentBlock(
         )
 //                Spacer(modifier = Modifier.weight(3f))
         if (demandInfo.imageUrl != null) {
+            Log.d("imageTest", demandInfo.imageUrl!!)
             AsyncImage(
                 modifier = Modifier
                     .aspectRatio(1f)

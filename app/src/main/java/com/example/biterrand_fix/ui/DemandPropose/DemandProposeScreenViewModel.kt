@@ -28,6 +28,7 @@ import com.example.biterrand_fix.data.UserBasicRepository
 import com.example.biterrand_fix.model.Demand
 import kotlinx.coroutines.*
 import java.io.File
+import java.lang.Exception
 
 
 data class proposeUiState(
@@ -76,7 +77,13 @@ class DemandProposeScreenViewModel (
         /*TODO 这里需要一个错误处理，以防表单没有正常提交*/
         Log.d("TDEBUG","${proposeUiState.demandInfo}")
         if(validateInput(proposeUiState.demandInfo)){
-            demandRepository.uploadDemand(proposeUiState.demandInfo)
+            try {
+                demandRepository.uploadDemand(proposeUiState.demandInfo)
+            }catch (e:Exception){
+                Log.d(proposeDebugTag,"${e}")
+            }
+        }else{
+            proposeUiState.isFormValid=false
         }
     }
     fun updateUiState(demand:Demand){
@@ -94,7 +101,7 @@ class DemandProposeScreenViewModel (
                 addPhotoUrl = latestUsedUri
             )
         )
-        proposeUiState.demandInfo.imageUrl="yes!"
+        proposeUiState.demandInfo.imageUrl= latestUsedUri.toString()
     }
 
     fun uploadLocalImage(url:Uri){

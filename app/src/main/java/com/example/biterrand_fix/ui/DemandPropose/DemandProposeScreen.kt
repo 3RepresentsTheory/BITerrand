@@ -88,6 +88,7 @@ fun DemandProposeScreen(
     //coroutine use for post demand
     Log.d(proposeDebugTag, "proposeScreen compose")
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     BackHandler(viewModel.sheetState.isVisible) {
         coroutineScope.launch { viewModel.sheetState.hide() }
     }
@@ -106,7 +107,11 @@ fun DemandProposeScreen(
                 Button(onClick = {
                     coroutineScope.launch {
                         viewModel.proposeDemand()
+                    }
+                    if(viewModel.proposeUiState.isFormValid){
                         navigateBack()
+                    }else{
+                        Toast.makeText(context,"请检查是否填写正确",Toast.LENGTH_SHORT).show()
                     }
                 }) {
                     Text("提交")
@@ -376,14 +381,14 @@ fun StartDestDDLPriceForm(
             onValueChange = { onValueChange(demand.copy(startPlace = it)) },
             label = { Text(text = "送货起始地址") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = false
+            singleLine = true
         )
         OutlinedTextField(
             value = demand.finalPlace,
             onValueChange = { onValueChange(demand.copy(finalPlace = it)) },
             label = { Text(text = "送货目的地址") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = false
+            singleLine = true
         )
         OutlinedTextField(
             value = demand.price.toString(),
