@@ -1,0 +1,33 @@
+这是NavHost中一个组件：
+        composable(route = HomeDestination.route) {
+            HomeScreen(
+                navigateToItemEntry = { navController.navigate(ItemEntryDestination.route) },
+                navigateToItemUpdate = {
+                    navController.navigate("${ItemDetailsDestination.route}/${it}")
+                }
+            )
+        }
+HomeScreen在触发导航到ItemUpdate时，导航到一个${ItemDetailsDestination.route}/${it}如此格式的地方
+然后在下方有一个：
+        composable(
+            route = ItemDetailsDestination.routeWithArgs,
+            arguments = listOf(navArgument(ItemDetailsDestination.itemIdArg) {
+                type = NavType.IntType
+            })
+        ) {
+            ItemDetailsScreen(
+                navigateToEditItem = { navController.navigate("${ItemEditDestination.route}/$it") },
+                navigateBack = { navController.navigateUp() }
+            )
+        }
+
+这里的composable中有一个route和argument，我不知道的是这里的navArgument有啥用，同时对于ItemDetailDestination
+他是一个这样的object:
+object ItemDetailsDestination : NavigationDestination {
+    override val route = "item_details"
+    override val titleRes = R.string.item_detail_title
+    const val itemIdArg = "itemId"
+    val routeWithArgs = "$route/{$itemIdArg}"
+}
+
+那么在HomeScreen导航到 item_details/xxx的时候，到底会怎么样？
